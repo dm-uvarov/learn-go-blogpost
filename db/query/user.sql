@@ -15,3 +15,14 @@ SELECT * FROM users
 ORDER BY id
 LIMIT $1
 OFFSET $2;
+
+-- name: UpdateUser :one
+UPDATE users
+set username = $2
+WHERE id = $1
+RETURNING *;
+
+
+-- name: DeleteAuthor :exec
+DELETE FROM users
+WHERE id = $1;

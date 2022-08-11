@@ -25,6 +25,16 @@ func (q *Queries) CreateUser(ctx context.Context, username string) (User, error)
 	return i, err
 }
 
+const deleteAuthor = `-- name: DeleteAuthor :exec
+DELETE FROM users
+WHERE id = $1
+`
+
+func (q *Queries) DeleteAuthor(ctx context.Context, id int32) error {
+	_, err := q.db.ExecContext(ctx, deleteAuthor, id)
+	return err
+}
+
 const getUser = `-- name: GetUser :one
 SELECT id, username FROM users
 WHERE id = $1 LIMIT 1
@@ -70,4 +80,23 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateUser = `-- name: UpdateUser :one
+UPDATE users
+set username = $2
+WHERE id = $1
+RETURNING id, username
+`
+
+type UpdateUserParams struct {
+	ID       int32  `json:"id"`
+	Username string `json:"username"`
+}
+
+func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, updateUser, arg.ID, arg.Username)
+	var i User
+	err := row.Scan(&i.ID, &i.Username)
+	return i, err
 }
